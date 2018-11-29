@@ -6,7 +6,7 @@ from drawnow import *
 tempC = []
 lightL = []
 
-arduinoData = serial.Serial('/dev/ttyACM3', 115200)
+arduinoData = serial.Serial('COM6', 115200)
 
 plt.ion()
 cunt=0
@@ -21,7 +21,7 @@ def fieldPlot():
     plt.plot(tempC, 'ro-', label='Degrees C')
     plt.legend(loc='upper left')
     plt2=plt.twinx()
-    plt.ylim(0,10)
+    plt.ylim(0,200)
     plt2.plot(lightL, 'bo-', label = 'Light L')
     plt.ylabel('Light level')
     plt2.ticklabel_format(useOffset=False)      #Force matplot to Not autoscale y axis

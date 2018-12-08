@@ -137,7 +137,6 @@ float averageLight(int values[]){
     float median = values[9];
     int valuesAdded = 0;
     for(int i = 0; i<20; i++){
-      Serial.println(values[i]);
       if(values[i] > (median-stdDeviation) && values[i] < (median+stdDeviation)){
         totalLight = totalLight + values[i];
         valuesAdded++;

@@ -18,9 +18,9 @@ int lightValues[20];
 int lightValueIndex = 0;
 float averageTempValue = -100.00;
 // 0: Blue (Cold), 1: Green (Good), 2: Red (Hot)
-int tempMode = 0;
-// Every 140 Values = 30 seconds w/ 200 delay.
-float tempValues[140];
+int tempMode = -1;
+// Every 120 Values = 30 seconds w/ 200 delay.
+float tempValues[120];
 int tempValueIndex = 0;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, ledPIN, NEO_GRB + NEO_KHZ800);
 
@@ -137,6 +137,7 @@ float averageLight(int values[]){
     float median = values[9];
     int valuesAdded = 0;
     for(int i = 0; i<20; i++){
+      Serial.println(values[i]);
       if(values[i] > (median-stdDeviation) && values[i] < (median+stdDeviation)){
         totalLight = totalLight + values[i];
         valuesAdded++;
@@ -156,43 +157,10 @@ float averageTemp(float values[]){
     }
     toReturn = totalTemp / 10;
   } else {
-    // We're presuming the values are on a bell curve, so drop the bottom and top 25% (outliers)
-    int valuesLength = sizeof(values) / sizeof(values[0]);
-    float initialMean = 0;
-    // qsort - last parameter is a function pointer to the sort function
-    // qsort(values, valuesLength, sizeof(float), sort_desc_float);
-    bubbleSortFloat(values, 140);
-    // Get initial mean
-    for(int i = 0; i<140; i++){
-      initialMean = initialMean + values[i];
+    for(int i = 0; i<120; i++){
+      totalTemp = totalTemp + values[i];
     }
-    initialMean = initialMean / 140;
-    // (x - mean)^2
-    float varianceVals[140];
-    for(int i = 0; i<140; i++){
-      varianceVals[i] = pow((values[i] - initialMean),2);
-    }
-    // Get Standard Deviation
-    float stdDeviation = 0;
-    for(int i = 0; i<140; i++){
-      stdDeviation = stdDeviation + varianceVals[i];
-    }
-    stdDeviation = pow((stdDeviation / 140), 0.5);
-    // Only add values for mean that are < 1 deviation from the median
-    float median = values[69];
-    int valuesAdded = 0;
-    for(int i = 0; i<140; i++){
-      if(values[i] > (median-stdDeviation) && values[i] < (median+stdDeviation)){
-        totalTemp = totalTemp + values[i];
-        valuesAdded++;
-      }
-    }
-    if(valuesAdded < 90){
-      // If we get really variant results then just use the result from last time
-      toReturn = averageTempValue;
-    } else {
-      toReturn = totalTemp / valuesAdded;
-    }
+    toReturn = totalTemp / 120;
   }
   return toReturn;
 }
@@ -207,6 +175,7 @@ void updateBrightness(){
   }
   // This statement will eventually call the Neopixel Fade to fade between brightnesses
   if(averageLightValue != -1){
+    // Workout the approximate offset we need; this is to prevent the LEDs being constantly turned on and off
     // Only call the brightness change if there is a change in brightness AND we're displaying light readings
     if(averageLightValue < 10){
       // Pitch Black, ask for full bright
@@ -214,7 +183,7 @@ void updateBrightness(){
         chasePermanent(strip.Color(20, 20, 20));
       }
       lightMode = 2;
-    } else if(averageLightValue < 30){
+    } else if(averageLightValue < 20){
       if(lightMode != 1 and visualMode == 0){
         chasePermanent(strip.Color(10, 10, 10));
       }
@@ -229,7 +198,7 @@ void updateBrightness(){
 }
 
 void updateTemperature(){
-  if(tempValueIndex == 140 or (tempValueIndex == 10 and averageTempValue == -100.00)){
+  if(tempValueIndex == 120 or (tempValueIndex == 10 and averageTempValue == -100.00)){
     averageTempValue = averageTemp(tempValues);
     tempValueIndex = 0;
   }
@@ -242,7 +211,7 @@ void updateTemperature(){
         chasePermanent(strip.Color(1, 3, 5));
       }
       tempMode = 2;
-    } else if(averageTempValue < 24){
+    } else if(averageTempValue < 24.00){
       // Just right, display green
       if(tempMode != 1 and visualMode == 1){
         chasePermanent(strip.Color(0, 5, 0));

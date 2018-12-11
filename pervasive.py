@@ -1,16 +1,36 @@
 import serial
+import warnings
+import serial.tools.list_ports
 import numpy
 import matplotlib.pyplot as plt
 from drawnow import *
+import datetime
+import os.path
+
 
 tempC = []
 lightL = []
 
-arduinoData = serial.Serial('COM6', 115200)
+exists = os.path.isfile('DataTemp.txt')
+exists2 = os.path.isfile('DataLight.txt')
+
+
+arduino_ports = [
+    p.device
+    for p in serial.tools.list_ports.comports()
+    if 'Arduino' in p.description
+]
+if not arduino_ports:
+    raise IOError("No Arduino found")
+if len(arduino_ports) > 1:
+    warnings.warn('Multiple Arduinos found - using the first')
+    
+    
+arduinoData = serial.Serial(arduino_ports[0], 115200)
+
 
 plt.ion()
 cunt=0
-file = open("Data.txt", "a")
 
 
 def fieldPlot():
@@ -42,31 +62,12 @@ while True:
     if(cunt>50):
         tempC.pop(0)
         lightL.pop(0)
-
-    file.write("Temperature C= ")
-    file.write(str(temp))
-    file.write("Light L =")
-    file.write(str(l))
-    
+    if exists and exists2:
+        file = open("DataTemp.txt", "a")
+        file2 = open("DataLight.txt", "a")
+        file.write(str(temp) +'\n')
+        file2.write(str(l) + '\n')
+   
 file.close()
-        
-    
-    
-    
-'''
-ser = serial.Serial(
-   port='/dev/ttyACM4',
-    baudrate=9600,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS
-)
-
-while 1:
-    serial_line = ser.readline()
-    print (str(serial_line))
-    if len(serial_line) == 0:
-      break
-'''
-
+file2.close()
 
